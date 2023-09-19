@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "afxwin.h"
 
 
 // CAutomaticGetRawImagesDlg 대화 상자
@@ -36,9 +37,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CWinThread* m_pThread;
+	void clearDialog();
 	static UINT CopyFiles(LPVOID param);
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnBnClickedOk();
+	CButton m_bCheckSubDir;
 };

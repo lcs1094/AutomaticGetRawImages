@@ -60,6 +60,7 @@ CAutomaticGetRawImagesDlg::CAutomaticGetRawImagesDlg(CWnd* pParent /*=NULL*/)
 void CAutomaticGetRawImagesDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_CHECK1, m_bCheckSubDir);
 }
 
 BEGIN_MESSAGE_MAP(CAutomaticGetRawImagesDlg, CDialogEx)
@@ -234,6 +235,9 @@ void CAutomaticGetRawImagesDlg::OnBnClickedButton3()
 
 void CAutomaticGetRawImagesDlg::OnBnClickedOk()
 {
+	GetDlgItemText(IDC_EDIT_JPG, SourcePath);
+	GetDlgItemText(IDC_EDIT_RAW, RAWPath);
+	GetDlgItemText(IDC_EDIT_DIR, TargetPath);
 	if (SourcePath.IsEmpty()) {
 		AfxMessageBox(_T("JPG 폴더 미설정"));
 	}
@@ -248,16 +252,24 @@ void CAutomaticGetRawImagesDlg::OnBnClickedOk()
 	}
 }
 
+void CAutomaticGetRawImagesDlg::clearDialog()
+{
+	SourcePath.Empty();
+	RAWPath.Empty();
+	TargetPath.Empty();
+	SetDlgItemText(IDC_STATIC_PROGRESS, _T(""));
+	m_bCheckSubDir.SetCheck(FALSE);
+}
+
 UINT CAutomaticGetRawImagesDlg::CopyFiles(LPVOID param)
 {
 	std::queue<CString> fileVec;
-
 	CAutomaticGetRawImagesDlg* myself = (CAutomaticGetRawImagesDlg*)param;
 
-	myself->SetDlgItemText(IDC_STATIC_NAME, _T("분석중입니다..."));
+	myself->SetDlgItemText(IDC_STATIC_PROGRESS, _T(""));
 	//SetDlgItemText(IDC_STATIC_NAME, _T("분석중입니다..."));
 	CString spath;
-	spath.Format(_T("%s/*.jpg"), myself->SourcePath);
+	spath.Format(_T("%s/*.JPG"), myself->SourcePath);
 
 	// 검색 클래스
 	CFileFind sfinder;
@@ -273,9 +285,18 @@ UINT CAutomaticGetRawImagesDlg::CopyFiles(LPVOID param)
 		sbWorking = sfinder.FindNextFile();
 
 		// folder 일 경우는 continue
-		if (sfinder.IsDirectory() || sfinder.IsDots())
+		if (sfinder.IsDots())
 			continue;
 
+		if (sfinder.IsDirectory()) {
+			if (myself->m_bCheckSubDir.GetCheck()) {
+
+			}
+			else {
+				continue;
+			}
+		}
+		
 		// 파일 일때
 
 		//파일의 이름
@@ -285,32 +306,29 @@ UINT CAutomaticGetRawImagesDlg::CopyFiles(LPVOID param)
 		if (_fileName == _T("Thumbs.db")) continue;
 
 		sfileName = sfinder.GetFileTitle();
-		fileVec.push_back(sfileName);
-		fileProgress.Format(_T("0  /  %d"), fileVec.size());
+		fileVec.push(sfileName);
 		//읽어온 파일 이름을 리스트박스에 넣음
 	}
-
-	CString tpath;
-	tpath.Format(_T("%s/*.cr3"), myself->TargetPath);
 
 	// CFileFind는 파일, 디렉터리가 존재하면 TRUE 를 반환함
 
 	CString fileName;
 	CString targetfile;
 	CString sourcefile;
-
-	for (int i = 0; i < fileVec.size(); i++)
+	int i = 1;
+	int amount = fileVec.size();
+	while (!fileVec.empty())
 	{
-		fileName = fileVec[i];
-		sourcefile.Format(_T("%s\\%s.cr3"), myself->RAWPath, fileName);
-		targetfile.Format(_T("%s\\%s.cr3"), myself->TargetPath, fileName);
-		myself->SetDlgItemText(IDC_STATIC_NAME, fileName);
+		fileName = fileVec.front();
+		fileVec.pop();
+		sourcefile.Format(_T("%s\\%s.CR3"), myself->RAWPath, fileName);
+		targetfile.Format(_T("%s\\%s.CR3"), myself->TargetPath, fileName);
 
-		fileProgress.Format(_T("%d / %d"), i + 1, fileVec.size());
+		fileProgress.Format(_T("%s.CR3 ... (%d / %d)"), fileName, i++, amount);
 		myself->SetDlgItemText(IDC_STATIC_PROGRESS, fileProgress);
 		CopyFile(sourcefile, targetfile, FALSE);
-
 	}
+	myself->clearDialog();
 	AfxMessageBox(_T("완료"));
 	return 0;
 }
