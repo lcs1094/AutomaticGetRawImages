@@ -105,7 +105,27 @@ BOOL CAutomaticGetRawImagesDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	CString strJPG;
+	CString strRAW;
+	CString strDIR;
+	strJPG = AfxGetApp()->GetProfileString(_T("Setting"), _T("LastWorkSpaceJPG"));
+	strRAW = AfxGetApp()->GetProfileString(_T("Setting"), _T("LastWorkSpaceRAW"));
+	strDIR = AfxGetApp()->GetProfileString(_T("Setting"), _T("LastWorkSpaceDIR"));
+	if (!strJPG.IsEmpty())
+	{
+		SourcePath = strJPG;
+		SetDlgItemText(IDC_EDIT_JPG, SourcePath);
+	}
+	if (!strRAW.IsEmpty())
+	{
+		RAWPath = strRAW;
+		SetDlgItemText(IDC_EDIT_RAW, RAWPath);
+	}
+	if (!strDIR.IsEmpty())
+	{
+		TargetPath = strDIR;
+		SetDlgItemText(IDC_EDIT_DIR, TargetPath);
+	}
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -249,6 +269,9 @@ void CAutomaticGetRawImagesDlg::OnBnClickedOk()
 	}
 	else {
 		m_pThread = AfxBeginThread(CopyFiles, this);
+		AfxGetApp()->WriteProfileStringW(_T("Setting"), _T("LastWorkSpaceJPG"), SourcePath);
+		AfxGetApp()->WriteProfileStringW(_T("Setting"), _T("LastWorkSpaceRAW"), RAWPath);
+		AfxGetApp()->WriteProfileStringW(_T("Setting"), _T("LastWorkSpaceDIR"), TargetPath);
 	}
 }
 
